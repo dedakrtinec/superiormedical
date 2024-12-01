@@ -1,5 +1,25 @@
-// @ts-check
 import { defineConfig } from 'astro/config';
+import tailwind from '@astrojs/tailwind';
 
-// https://astro.build/config
-export default defineConfig({});
+export default defineConfig({
+  integrations: [tailwind()],
+  // Přidáme konfiguraci pro content collections
+  content: {
+    collections: {
+      blog: {
+        schema: {
+          type: 'content',
+          fields: {
+            title: 'string',
+            excerpt: 'string',
+            author: 'string',
+            authorRole: 'string',
+            publishDate: 'date',
+            image: 'string',
+            tags: ['string']
+          }
+        }
+      }
+    }
+  }
+});
