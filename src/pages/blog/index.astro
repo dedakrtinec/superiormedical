@@ -61,7 +61,9 @@ const sortedPosts = posts.sort((a: BlogPost, b: BlogPost) =>
               <div class="p-6">
                 <div class="flex gap-2 mb-3">
                   {post.data.tags.map((tag: string) => (
-                    <span class="tag px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">{tag}</span>
+  <span class="tag px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+    {tag}
+                    </span>
                   ))}
                 </div>
                 <h2 class="text-xl font-bold mb-2">{post.data.title}</h2>
@@ -81,57 +83,70 @@ const sortedPosts = posts.sort((a: BlogPost, b: BlogPost) =>
 </Layout>
 
 <script>
-interface HTMLElementWithDataset extends HTMLElement {
-  dataset: DOMStringMap;
-}
+ document.addEventListener('DOMContentLoaded', initializeFiltering);
+window.addEventListener('pageshow', initializeFiltering);
 
-document.addEventListener('DOMContentLoaded', function() {
+function initializeFiltering() {
   const searchInput = document.getElementById('search') as HTMLInputElement;
   const blogPosts = document.getElementById('blog-posts');
   let currentTag: string | null = null;
 
-  function filterPosts(): void {
-    if (!searchInput || !blogPosts) return;
+  function filterPosts() {
+    const searchTerm = (searchInput?.value || '').toLowerCase();
+    const posts = document.querySelectorAll('#blog-posts article');
 
-    const searchTerm = searchInput.value.toLowerCase();
-    const posts = blogPosts.querySelectorAll('article');
-
-    posts.forEach((post: Element) => {
+    posts.forEach(post => {
       const title = post.querySelector('h2')?.textContent?.toLowerCase() || '';
       const excerpt = post.querySelector('p')?.textContent?.toLowerCase() || '';
-      const tags = Array.from(post.querySelectorAll('.tag'))
-        .map(tag => tag.textContent?.toLowerCase() || '');
+      const tags = Array.from(post.querySelectorAll('.tag')).map(tag => 
+        tag.textContent?.trim().toLowerCase() || ''
+      );
 
+      const hasTag = !currentTag || tags.includes(currentTag.toLowerCase());
       const matchesSearch = title.includes(searchTerm) || excerpt.includes(searchTerm);
-      const matchesTag = !currentTag || tags.includes(currentTag.toLowerCase());
 
-      (post as HTMLElement).style.display = matchesSearch && matchesTag ? 'block' : 'none';
+      (post as HTMLElement).style.display = (hasTag && matchesSearch) ? '' : 'none';
     });
   }
 
-  // Event listener pro vyhledávání
+  const urlParams = new URLSearchParams(window.location.search);
+  const tagFromUrl = urlParams.get('activeTag');
+  
+  if (tagFromUrl) {
+    currentTag = tagFromUrl;
+    const tagButton = document.querySelector(`.tag-filter[data-tag="${tagFromUrl}"]`);
+    if (tagButton) {
+      tagButton.classList.add('bg-blue-500', 'text-white');
+      filterPosts();
+    }
+  }
+
   searchInput?.addEventListener('input', filterPosts);
 
-  // Event listener pro tagy
-  document.querySelectorAll('.tag-filter').forEach((button: Element) => {
+  document.querySelectorAll('.tag-filter').forEach(button => {
     button.addEventListener('click', () => {
-      const tagButton = button as HTMLElementWithDataset;
-      const tag = tagButton.dataset.tag;
+      const tag = (button as HTMLElement).dataset.tag;
       if (!tag) return;
 
-      currentTag = currentTag === tag ? null : tag;
+      document.querySelectorAll('.tag-filter').forEach(btn => 
+        btn.classList.remove('bg-blue-500', 'text-white')
+      );
 
-      document.querySelectorAll('.tag-filter').forEach((btn: Element) => {
-        const tagBtn = btn as HTMLElementWithDataset;
-        if (tagBtn.dataset.tag === currentTag) {
-          btn.classList.add('bg-blue-500', 'text-white');
-        } else {
-          btn.classList.remove('bg-blue-500', 'text-white');
-        }
-      });
+      if (currentTag === tag) {
+        currentTag = null;
+        const url = new URL(window.location.href);
+        url.searchParams.delete('activeTag');
+        window.history.pushState({}, '', url);
+      } else {
+        currentTag = tag;
+        button.classList.add('bg-blue-500', 'text-white');
+        const url = new URL(window.location.href);
+        url.searchParams.set('activeTag', tag);
+        window.history.pushState({}, '', url);
+      }
 
       filterPosts();
     });
   });
-});
-</script>
+}
+  </script>

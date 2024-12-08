@@ -1,4 +1,5 @@
 ---
+// Definice rozhraní pro blogový příspěvek
 interface BlogPost {
   slug: string;
   data: {
@@ -11,12 +12,15 @@ interface BlogPost {
   };
 }
 
+// Definice rozhraní pro komponentu BlogCard
 interface Props {
   post: BlogPost;
 }
 
+// Extrahování vlastnosti 'post' z props
 const { post } = Astro.props;
 ---
+
 <article class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
   <a href={`/blog/${post.slug}`}>
     <img
